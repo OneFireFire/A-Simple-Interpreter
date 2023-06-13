@@ -30,7 +30,10 @@ class Interpreter(object):
         self.pos = 0
         self.current_token = None
         self.result = 0
-        self.op=PLUS
+
+    ##########################################################
+    # Lex analyzer                                           #
+    ##########################################################
 
     def error(self):
         raise Exception('Error parsing input')
@@ -78,48 +81,36 @@ class Interpreter(object):
             
         return Token(EOF, None)
 
+    ##########################################################
+    # Syntax analyzer                                        #
+    ##########################################################
+
     def eat(self, token_type):
-        # compare the current token type with the passed token
-        # type and if they match then "eat" the current token
-        # and assign the next token to the self.current_token,
-        # otherwise raise an exception.
+        # eat like a pointer to token
         if self.current_token.type == token_type:
             self.current_token = self.get_next_token()
         else:
             self.error()
 
-    def expr(self):
-        """expr -> INTEGER PLUS INTEGER"""
-        # set current token to the first token taken from the input
-        self.current_token = self.get_next_token()
-        while self.current_token.type != 'EOF':
-            current_token=self.current_token
-            print(self.current_token)
-            
-            if current_token.type == INTEGER:
-                if self.op == 'PLUS':
-                    self.result += self.current_token.value
-                if self.op == 'SUB':
-                    self.result -= self.current_token.value
-                if self.op == 'MUL':
-                    self.result *= self.current_token.value
-                if self.op == 'DIV':
-                    self.result /= self.current_token.value
-                self.eat(INTEGER)  
-            elif current_token.type == PLUS:
-                self.op=PLUS
-                self.eat(PLUS)
-            elif current_token.type == SUB:
-                self.op=SUB
-                self.eat(SUB)
-            elif current_token.type == MUL:
-                self.op=MUL
-                self.eat(MUL)
-            elif current_token.type == DIV:
-                self.op=DIV
-                self.eat(DIV)
+    def term(self):
+        current_token = self.current_token
+        self.eat(INTEGER)
+        return current_token.value
 
-                       
+    def expr(self):
+        self.current_token = self.get_next_token()
+        
+        self.result = self.term()
+        while self.current_token.type in (PLUS, SUB):
+            current_token=self.current_token
+            
+            if current_token.type == PLUS:
+                self.eat(PLUS)
+                self.result += self.term()
+            elif current_token.type == SUB:
+                self.eat(SUB)
+                self.result -= self.term()
+
         return self.result
 
 
