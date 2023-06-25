@@ -10,4 +10,8 @@ Learn princinples but not methods.
 
 ## part 3
 
-Put knowledge into practice to turn it into a skill.
+Put knowledge into practice to turn it into a skill.   
+
+## part 4
+
+I do and I understand.

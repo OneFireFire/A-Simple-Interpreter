@@ -23,18 +23,11 @@ class Token(object):
     def __repr__(self):
         return self.__str__()
 
-
-class Interpreter(object):
+class Lexer(object):
     def __init__(self, text):
         self.text = text
         self.pos = 0
-        self.current_token = None
-        self.result = 0
-
-    ##########################################################
-    # Lex analyzer                                           #
-    ##########################################################
-
+        
     def error(self):
         raise Exception('Error parsing input')
 
@@ -80,38 +73,56 @@ class Interpreter(object):
             self.error()
             
         return Token(EOF, None)
+        
+    
+class Interpreter(object):
+    def __init__(self, lexer):
+        self.lexer = lexer
+        self.current_token = self.lexer.get_next_token()
+        
+    def error(self):
+        raise Exception('Invaild syntax')
 
-    ##########################################################
-    # Syntax analyzer                                        #
-    ##########################################################
 
     def eat(self, token_type):
         # eat like a pointer to token
         if self.current_token.type == token_type:
-            self.current_token = self.get_next_token()
+            self.current_token = self.lexer.get_next_token()
         else:
             self.error()
 
-    def term(self):
-        current_token = self.current_token
+    def factor(self):
+        token = self.current_token
         self.eat(INTEGER)
-        return current_token.value
+        return token.value
 
+    def exprA(self):
+        result = self.factor()
+        while self.current_token.type in (MUL, DIV):
+            current_token=self.current_token
+            
+            if current_token.type == MUL:
+                self.eat(MUL)
+                result *= self.factor()
+            elif current_token.type == DIV:
+                self.eat(DIV)
+                result /= self.factor()
+
+        return result
+    
     def expr(self):
-        self.current_token = self.get_next_token()
-        
-        self.result = self.term()
+        result=self.exprA()
         while self.current_token.type in (PLUS, SUB):
             current_token=self.current_token
             
             if current_token.type == PLUS:
                 self.eat(PLUS)
-                self.result += self.term()
+                result += self.exprA()
             elif current_token.type == SUB:
                 self.eat(SUB)
-                self.result -= self.term()
+                result -= self.exprA()
 
-        return self.result
+        return result
 
 
 def main():
@@ -124,10 +135,11 @@ def main():
             break
         if not text:
             continue
-        interpreter = Interpreter(text)
+        lexer = Lexer(text)
+        interpreter = Interpreter(lexer)
         result = interpreter.expr()
         print(result)
 
-
+   
 if __name__ == '__main__':
     main()
